@@ -1,18 +1,15 @@
-require "pry"
+# frozen_string_literal: true
+
 class Factory
   class << self
     def new(*arguments, &block)
-      name = if arguments.first.is_a? String
-        arguments.shift
-      else
-        nil
-      end
+      name = arguments.shift if arguments.first.is_a? String
 
       instance = Class.new do
         attr_accessor *arguments
 
         define_method :initialize do |*params|
-          raise ArgumentError.new('Excess arguments') if params.size > arguments.size
+          raise ArgumentError, 'Excess arguments' if params.size > arguments.size
 
           params.each_with_index do |value, index|
             instance_variable_set("@#{arguments[index]}", value)
@@ -20,13 +17,13 @@ class Factory
         end
 
         def ==(other)
-          raise TypeError.new('Wrong class') unless self.class == other.class
-          self.instance_variables_values == other.instance_variables_values
+          raise TypeError, 'Wrong class' unless self.class == other.class
+          instance_variables_values == other.instance_variables_values
         end
 
         def [](param)
           var = if param.is_a? Integer
-                  self.instance_variables[param]
+                  instance_variables[param]
                 else
                   "@#{param}"
                 end
@@ -38,17 +35,17 @@ class Factory
         end
 
         def instance_variables_values
-          self.instance_variables.map do |var|
+          instance_variables.map do |var|
             instance_variable_get(var)
           end
         end
 
         def size
-          self.instance_variables.count
+          instance_variables.count
         end
 
         def members
-          instance_variables.map { |var| var.to_s.tr('@', '').to_sym  }
+          instance_variables.map { |var| var.to_s.tr('@', '').to_sym }
         end
 
         def each(&block)
@@ -76,7 +73,6 @@ class Factory
           result
         end
 
-
         alias_method :to_a, :instance_variables_values
         alias_method :length, :size
         class_eval(&block) if block_given?
@@ -86,6 +82,3 @@ class Factory
     end
   end
 end
-# Customer = Factory.new('Customer', :name, :city)
-# dimas = Customer.new('dimas', 'dievka')
-# binding.pry
