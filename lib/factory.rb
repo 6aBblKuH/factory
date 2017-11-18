@@ -11,7 +11,7 @@ class Factory
         raise ArgumentError, 'Excess arguments' if params.size > arguments.size
 
         arguments.each_with_index do |_value, index|
-          instance_variable_set("@#{arguments[index]}", params[index])
+          instance_variable_set("@#{_value}", params[index])
         end
       end
 
@@ -24,16 +24,13 @@ class Factory
       end
 
       def [](param)
-        attr_name = if param.is_a?(Integer)
-                      raise IndexError unless instance_variables[param]
-                      instance_variables[param]
-                    elsif param.is_a?(Float)
+        attr_name = if param.class.superclass == Numeric
                       raise IndexError unless instance_variables[param.floor]
                       instance_variables[param.floor]
                     else
+                      raise NameError unless instance_variable_get("@#{param}")
                       "@#{param}"
         end
-        raise NameError unless instance_variable_get(attr_name)
         instance_variable_get(attr_name)
       end
 
