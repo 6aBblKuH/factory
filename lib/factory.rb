@@ -4,67 +4,86 @@ class Factory
   def self.new(*arguments, &block)
     name = arguments.shift if arguments.first.is_a? String
 
-    instance = Class.new do
+    clazz = Class.new do
       attr_accessor *arguments
 
       define_method :initialize do |*params|
         raise ArgumentError, 'Excess arguments' if params.size > arguments.size
 
-        params.each_with_index do |value, index|
-          instance_variable_set("@#{arguments[index]}", value)
+        arguments.each_with_index do |_value, index|
+          instance_variable_set("@#{arguments[index]}", params[index])
         end
       end
 
+      def to_s
+        to_a << self.class
+      end
+
       def ==(other)
-        instance_variables_values == other.instance_variables_values
+        to_s == other.to_s
       end
 
       def [](param)
-
-        instance_variable_name = if param.is_a? Integer
-                instance_variables[param]
-              else
-                "@#{param}"
-              end
-        instance_variable_get(instance_variable_name)
+        attr_name = if param.is_a?(Integer)
+                      raise IndexError unless instance_variables[param]
+                      instance_variables[param]
+                    elsif param.is_a?(Float)
+                      raise IndexError unless instance_variables[param.floor]
+                      instance_variables[param.floor]
+                    else
+                      "@#{param}"
+        end
+        raise NameError unless instance_variable_get(attr_name)
+        instance_variable_get(attr_name)
       end
 
-      def []=(param, value)
-        instance_variable_set("@#{param}", value)
+      def []=(attr_name, attr_value)
+        if attr_name.is_a? Integer
+          raise IndexError unless instance_variables[attr_name]
+        end
+        raise NameError unless instance_variable_get("@#{attr_name}")
+        instance_variable_set("@#{attr_name}", attr_value)
       end
 
       def size
-        instance_variables.count
+        members.count
       end
 
-      def members
-        instance_variables.map { |var| var.to_s.tr('@', '').to_sym }
+      define_method :members do
+        arguments
       end
 
       def each(&block)
         instance_variables_values.each(&block)
       end
 
-      def each_pair(&block)
-        Hash[members.zip(instance_variables_values)].each(&block)
-      end
-
-      def values_at(*indexes)
-        indexes.map { |index| to_a[index] }
-      end
-
-      def select(&block)
-        to_a.keep_if(&block)
-      end
-
-      def dig(*params)
-        params.inject(self) do |result, param|
-          break if result.class == NilClass
-          result[param]
+      def each_pair
+        members.each do |attr_name|
+          yield attr_name, send(attr_name)
         end
       end
 
-      private
+      def values_at(*indexes)
+        indexes.map do |index|
+          raise IndexError unless instance_variables[index]
+          to_a[index]
+        end
+      end
+
+      def select(&block)
+        to_a.select(&block)
+      end
+
+      def dig(*key)
+        to_h.dig(*key)
+      end
+
+      def to_h
+        members.each_with_object({}) do |name, hash|
+          hash[name] = self[name]
+        end
+      end
+
       def instance_variables_values
         instance_variables.map do |var|
           instance_variable_get(var)
@@ -73,9 +92,9 @@ class Factory
 
       alias_method :to_a, :instance_variables_values
       alias_method :length, :size
+      protected :instance_variables_values
       class_eval(&block) if block_given?
     end
-
-    name ? const_set(name, instance) : instance
+    name ? const_set(name, clazz) : clazz
   end
 end
