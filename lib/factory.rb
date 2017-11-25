@@ -10,8 +10,8 @@ class Factory
       define_method :initialize do |*params|
         raise ArgumentError, 'Excess arguments' if params.size > arguments.size
 
-        arguments.each_with_index do |_value, index|
-          instance_variable_set("@#{_value}", params[index])
+        arguments.each_with_index do |value, index|
+          instance_variable_set("@#{value}", params[index])
         end
       end
 
@@ -28,7 +28,7 @@ class Factory
                       raise IndexError unless instance_variables[param.floor]
                       instance_variables[param.floor]
                     else
-                      raise NameError unless instance_variable_get("@#{param}")
+                      raise NameError unless instance_variable_defined?("@#{param}".to_sym)
                       "@#{param}"
         end
         instance_variable_get(attr_name)
@@ -38,7 +38,7 @@ class Factory
         if attr_name.is_a? Integer
           raise IndexError unless instance_variables[attr_name]
         end
-        raise NameError unless instance_variable_get("@#{attr_name}")
+        raise NameError unless instance_variable_defined?("@#{attr_name}".to_sym)
         instance_variable_set("@#{attr_name}", attr_value)
       end
 
