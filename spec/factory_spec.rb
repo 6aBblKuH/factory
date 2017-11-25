@@ -60,6 +60,13 @@ RSpec.describe 'Factory' do
     expect(joe['name']).to eq('Joe Smith')
     expect(joe[:name]).to eq('Joe Smith')
     expect(joe[0]).to eq('Joe Smith')
+
+    expect { joe[-123] }.to raise_error(IndexError)
+    expect { joe[+123] }.to raise_error(IndexError)
+
+    expect { joe[:a] }.to raise_error(NameError)
+
+    expect(joe[1.5]).to eq('123 Maple, Anytown NC')
   end
 
   it 'attribute assignment operator works as expected' do
@@ -72,6 +79,11 @@ RSpec.describe 'Factory' do
 
     expect(joe.name).to eq('Luke')
     expect(joe.zip).to eq('90210')
+
+    expect { joe[:abc] = '123' }.to raise_error(NameError)
+
+    expect { joe[-123] = '123' }.to raise_error(IndexError)
+    expect { joe[+123] = '123' }.to raise_error(IndexError)
   end
 
   it 'dig works as expected' do
@@ -150,5 +162,8 @@ RSpec.describe 'Factory' do
     joe = Customer.new('Joe Smith', '123 Maple, Anytown NC', 12_345)
 
     expect(joe.values_at(0, 2)).to eq(['Joe Smith', 12_345])
+
+    expect { joe.values_at(-123) }.to raise_error(IndexError)
+    expect { joe.values_at(+123) }.to raise_error(IndexError)
   end
 end
