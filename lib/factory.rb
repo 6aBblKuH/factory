@@ -11,7 +11,7 @@ class Factory
         raise ArgumentError, 'Excess arguments' if params.size > arguments.size
 
         arguments.each_with_index do |value, index|
-          instance_variable_set("@#{value}", params[index])
+          send("#{value}=", params[index])
         end
       end
 
@@ -39,7 +39,7 @@ class Factory
           raise IndexError unless instance_variables[attr_name]
         end
         raise NameError unless instance_variable_defined?("@#{attr_name}".to_sym)
-        instance_variable_set("@#{attr_name}", attr_value)
+        send("#{attr_name}=", attr_value)
       end
 
       def size
